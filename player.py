@@ -2,35 +2,8 @@ import pygame
 
 WHITE = (255, 255, 255)
 
-# class Player(pygame.sprite.Sprite):
-#     def __init__(self, x, y, radius=15, speed=200):
-#         super().__init__()
-#         self.radius = radius
-#         self.speed = speed
-
-#         self.image = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
-#         pygame.draw.circle(self.image, WHITE, (radius, radius), radius)
-
-#         # Define the rect for positioning and collision
-#         self.rect = self.image.get_rect(center=(x, y))
-
-#     def handle_keys(self, keys, dt):
-#         if keys[pygame.K_LEFT]:
-#             self.rect.x -= self.speed * dt
-#         if keys[pygame.K_RIGHT]:
-#             self.rect.x += self.speed * dt
-#         if keys[pygame.K_UP]:
-#             self.rect.y -= self.speed * dt
-#         if keys[pygame.K_DOWN]:
-#             self.rect.y += self.speed * dt
-#         print(self.rect.x, self.rect.y)
-
-#     def update(self):
-#         # Placeholder if you want to use sprite groups with `group.update()`
-#         pass
-
 class Player(pygame.sprite.Sprite):
-    def __init__(self, x, y, radius=15, max_speed=200, accel=600, damping=0.95):
+    def __init__(self, x, y, radius=15, max_speed=250, accel=600, damping=0.95):
         super().__init__()
         self.radius = radius
         self.max_speed = max_speed
