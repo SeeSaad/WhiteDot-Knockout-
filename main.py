@@ -1,10 +1,11 @@
 import pygame
 import sys
 import random
+import os
 
 from player import Player
 from enemies import Grey
-from ui import draw_menu
+from ui import draw_menu, draw_pause_overlay, show_result
 
 WIDTH, HEIGHT = 800, 600
 PLAYER_RADIUS = 15
@@ -14,9 +15,33 @@ WHITE = (255, 255, 255)
 screen : pygame.Surface = None
 game_state : str = "menu"
 
+def load_best_time():
+    base_path = os.path.dirname(__file__)
+    file_path = os.path.join(base_path, "best_time.txt")
+
+    try:
+        with open(file_path, "r") as f:
+            best_time = float(f.read())
+        return best_time
+    except:
+        return 999
+
+def save_best_time(time):
+    base_path = os.path.dirname(__file__)
+    file_path = os.path.join(base_path, "best_time.txt")
+    with open(file_path, "w") as f:
+        f.write(str(time))
+
+def all_enemies_off_screen(enemies):
+    for enemy in enemies:
+        if -15 <= enemy.rect.centerx <= WIDTH +15 and -15 <= enemy.rect.centery <= HEIGHT + 15:
+            return False
+    return True
+
 def menu():
     global game_state
 
+    best_time = load_best_time()
     clock = pygame.time.Clock()
 
     while True:
@@ -32,7 +57,7 @@ def menu():
             game_state = "quit"
             break
 
-        draw_menu(screen, WIDTH)
+        draw_menu(screen, WIDTH, best_time)
 
 def resolve_collision(a, b):
     """Elastic collision response between two circular sprites (a and b)."""
@@ -67,6 +92,10 @@ def game():
 
     NUM_ENEMIES = 10
 
+    paused = False
+    win = False
+    best_time = load_best_time()
+
     dt = 0
     
     player = Player(WIDTH // 2, HEIGHT // 2)
@@ -83,6 +112,8 @@ def game():
 
     clock = pygame.time.Clock()
     running = True
+
+    start_time = pygame.time.get_ticks()
     while running:
         dt = clock.tick(60) / 1000
 
@@ -90,11 +121,23 @@ def game():
             if event.type == pygame.QUIT:
                 game_state = "quit"
                 running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_r:
+                    running = False
+                elif event.key == pygame.K_ESCAPE:
+                    paused = not paused
+
+        if paused:
+            screen.fill(BLACK)
+            all_sprites.draw(screen)
+            draw_pause_overlay(screen)
+            pygame.display.flip()
+            continue
 
         keys = pygame.key.get_pressed()
         
-        if keys[pygame.K_r]:
-            running = False
+        # if keys[pygame.K_r]:
+        #     running = False
 
         player.handle_input(keys, dt)
 
@@ -119,8 +162,22 @@ def game():
                 if pair not in handled_pairs:
                     resolve_collision(player, enemy)
                     handled_pairs.add(pair)
+        
+        if all_enemies_off_screen(enemies):
+            elapsed_time = (pygame.time.get_ticks() - start_time) / 1000
+            if elapsed_time < best_time:
+                save_best_time(elapsed_time)
+                win = True
+            show_result(screen, win, elapsed_time, best_time)
+            pygame.time.wait(1500)
+            running = False
+            break
 
         screen.fill(BLACK)
+        font = pygame.font.SysFont(None, 36)
+        elapsed_time = (pygame.time.get_ticks() - start_time) / 1000
+        time_surface = font.render(f"Time: {elapsed_time:.2f}", True, (255, 255, 255))
+        screen.blit(time_surface, (10, 10))
         all_sprites.draw(screen)
         pygame.display.flip()
 
@@ -146,67 +203,3 @@ def main():
     sys.exit()
 
 main()
-
-# def main():
-#     pygame.init()
-
-
-#     WIDTH, HEIGHT = 800, 600
-#     PLAYER_RADIUS = 15
-#     PLAYER_SPEED = 5
-#     BLACK = (0, 0, 0)
-#     WHITE = (255, 255, 255)
-
-#     NUM_ENEMIES = 10
-
-#     dt = 0
-
-#     handled_pairs = set()
-
-#     screen = pygame.display.set_mode((WIDTH, HEIGHT))
-#     pygame.display.set_caption("WhiteDot SURVIVE")
-
-#     player = Player(WIDTH // 2, HEIGHT // 2)
-
-#     enemies = pygame.sprite.Group()
-#     for _ in range(NUM_ENEMIES):
-#         x = random.randint(50, WIDTH - 50)
-#         y = random.randint(50, HEIGHT - 50)
-#         enemies.add(Grey(x, y))
-
-#     all_sprites = pygame.sprite.Group()
-#     all_sprites.add(player)
-#     all_sprites.add(enemies)
-
-#     clock = pygame.time.Clock()
-#     running = True
-#     while running:
-#         dt = clock.tick(60) / 1000
-
-#         for event in pygame.event.get():
-#             if event.type == pygame.QUIT:
-#                 running = False
-
-#         keys = pygame.key.get_pressed()
-#         player.handle_input(keys, dt)
-
-#         all_sprites.update(dt)
-
-#         if pygame.sprite.spritecollide(player, enemies, False, pygame.sprite.collide_circle):
-#             print("Player collided with an enemy!")
-
-#         enemy_list = list(enemies)
-#         for i in range(len(enemy_list)):
-#             for j in range(i + 1, len(enemy_list)):
-#                 if pygame.sprite.collide_circle(enemy_list[i], enemy_list[j]):
-#                     print("Enemy-to-enemy collision!")
-
-#         screen.fill(BLACK)
-#         all_sprites.draw(screen)
-#         pygame.display.flip()
-
-
-#     pygame.quit()
-#     sys.exit()
-
-# main()
