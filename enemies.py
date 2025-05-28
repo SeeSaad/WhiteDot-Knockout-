@@ -1,9 +1,3 @@
-# Green - TANK
-
-# Soldier - Picks a direction, moves at 80% speed
-
-# Scout - Yellow, moves randomly ,has a area around him and detects the player each 4 seconds, passes player location to Soldier for 2 seconds
-
 import pygame
 import random
 
